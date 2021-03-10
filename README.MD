@@ -27,4 +27,4 @@ It is the result of the PhD research developed by [Filipe JS Brandão](https://f
 
 ## Installation
 You can install RoomSurveyor from the Rhino builtin package manager (_PackageManager command) on macOS or Windows.
-Alternatively you need to download the gha file, unblock it (if in windows) and place it on the Components folder.
+Alternatively you need to download the gha file from [Food4Rhino](https://www.food4rhino.com/app/roomsurveyor), unblock it (if in windows) and place it on the Components folder.
