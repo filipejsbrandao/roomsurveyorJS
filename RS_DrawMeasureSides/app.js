@@ -347,7 +347,11 @@ function onKeyUp(event) {
 
 // gets the canvas
 function getCanvas() {
-  return document.getElementById('canvas');
+  //In case the canvas dimensions are set in CSS...
+  let canvas = document.getElementById('canvas');
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  return canvas;
 }
 
 // gets the [x, y] location of the mouse in world coordinates
