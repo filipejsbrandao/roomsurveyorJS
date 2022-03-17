@@ -1,29 +1,11 @@
-# RoomSurveyor
+# RoomSurveyor JS
 
 **RoomSurveyor** implements iterative triangulation algorithms to assist users to survey rooms, either orthogonal or non-orthogonal, and automating the drawing of the as-is survey. RoomSurvey components in particular, can be used to deploy an interactive workflow of space survey for non-expert users that mimics the empiric surveying workflows used by architects. This enables the possibility of developing low-key design interfaces for mass-customizable systems where contextual information is required.
 
 It is the result of the PhD research developed by [Filipe JS Brandão](https://filipebrandao.pt) at ISCTE-Instituto Universitário de Lisboa / [ISTAR-IUL](http://istar.iscte-iul.pt) research center. It includes interactive triangulation algorithms [(da Silva Brandão et al. 2020)](http://link.springer.com/article/10.1007/s00004-020-00491-3) to assist the accurate survey of non-convex rooms and a few other utilities to handle 2D Polygons. Two versions of the RoomSurvey algorithm are offered: the first, described in [(Brandao et al. 2019)](http://papers.cumincad.org/cgi-bin/works/paper/ecaadesigradi2019_473), is more effective in rooms with few non-orthogonal corners; a second one, RoomSurvey Strict, privileges shortest diagonals and is more effective in rooms with no orthogonal corners.
 
-## components
-
-* ArePointsLeft
-* IsPointLeft
-* IsOrthoPolygon
-* IsInsideWn
-* IsConvex
-* RandomConvexPoly
-* RandomOgon
-* RoomSurvey
-* RoomSurveyStrict
-* InternalDiagonals
-* PolygonDiagonals
-* OrientPolygon
-* PolygonAngles
-* PolygonCornerProperties
-* ShiftStartPoint
-* RoomTurtle
-
-
+## JavaScript apps
+This repo contains two simple JavaScript interfaces to streamline the survey-to-production workflow for the user, overcoming the ShapeDiver's current interaction limitations, namely allowing the user to draw on the canvas and interactive value collection and validation. They provide an interface on the HTML canvas to allow users to draw polygonal shapes that represent the space or morphology they might want to survey. The application validates the polygon (if it is not self-intersecting and is CCW oriented) and request lengths of all sides sequentially, validating the user input. This ensures the right information is feed to the RoomSurvey inputs. In the end you can download a JSON file that might be used on an online configurator (like this) to finish the triangulation process with the RoomSurveyor Grasshopper plugin. This download step may be removed altogether by sending the JSON file directly to the configurator using the ShapeDiver API.
 
 ## Installation
 You can install RoomSurveyor from the Rhino builtin package manager (_PackageManager command) on macOS or Windows.
