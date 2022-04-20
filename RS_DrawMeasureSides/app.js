@@ -337,7 +337,7 @@ function onKeyUp(event) {
 
     //Added Left key to remove points
     case "ArrowLeft":
-      undo();
+      undo(true);
       break;
 
     // when the enter key is pressed, save the new polygon
@@ -348,10 +348,14 @@ function onKeyUp(event) {
   //draw();
 }
 
-function undo(){
-  if(_model.points.count > 2)
+function undo(key){
+  if(_model.points.count > 2 && key){
     _model.points.removeAt(_model.points.count - 2);
-    draw()
+  }
+  if(_model.points.count > 2 && !key){
+    _model.points.removeAt(_model.points.count - 1);
+  }
+  draw()
 }
 
 function deleteShape(){
