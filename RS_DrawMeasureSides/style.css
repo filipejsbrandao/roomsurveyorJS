@@ -1,9 +1,6 @@
 canvas.rhino3dm {
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
-  border: 0px none;
-  background-color: lightgray;
+  margin-left: auto; margin-right: auto;
+  display: block; border: 0px none; background-color: lightgray; width: 100%;
 }
 
 #description {

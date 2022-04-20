@@ -1,6 +1,4 @@
 // global variables
-
-
 let _rhino3dm = null;
 let _model = {
   // saved polylines
@@ -23,13 +21,24 @@ function run() {
   let canvas = getCanvas() //this is a function that is on the helper section
   canvas.addEventListener('mousedown', onMouseDown);
   canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseleave', onMouseLeave);
+  canvas.addEventListener('mouseenter', onMouseEnter);
   window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('resize', onWindowResize, false); //window resizer
   _model.points = new _rhino3dm.Point3dList();
   _model.viewport = new _rhino3dm.ViewportInfo();
   _model.viewport.screenPort = [0, 0, canvas.clientWidth, canvas.clientHeight];
   let proportion = canvas.clientWidth / canvas.clientHeight;
   _model.viewport.setFrustum(-30 * proportion,30 * proportion,-30,30,1,1000);
   draw();
+}
+
+function onWindowResize() {
+    let canvas = getCanvas();
+    _model.viewport.screenPort = [0, 0, canvas.clientWidth, canvas.clientHeight];
+    let proportion = canvas.clientWidth / canvas.clientHeight;
+    _model.viewport.setFrustum(-30 * proportion,30 * proportion,-30,30,1,1000);
+    draw();
 }
 
 //Controls the command bar flow
@@ -203,6 +212,9 @@ function generateForm(){
   var description = document.querySelector('#description')
   var commandBar = document.querySelector('#command-bar');
   var continueBt = document.querySelector('#continue');
+  var closeShapeBt = document.querySelector('#close-shape');
+  var deleteShapeBt = document.querySelector('#delete-shape');
+  var undoBt = document.querySelector('#undo');
   var br = document.createElement("br");
   var form = document.createElement("form");
   form.setAttribute("id", "side-lengths");
@@ -249,31 +261,58 @@ function generateForm(){
   commandBar.insertBefore(sidelist, continueBt);
 
   continueBt.removeAttribute("onClick", "processForm()");
-  continueBt.setAttribute("onClick", "processSideList()")
-  continueBt.innerHTML = "Download JSON file"
+  continueBt.setAttribute("onClick", "processSideList()");
+  continueBt.innerHTML = "Download JSON file";
+  closeShapeBt.remove();
+  deleteShapeBt.remove();
+  undoBt.remove();
 
   //call the new draw function
   drawHelper(1);
 }
 
 /* * * * * * * * * * * * * * * *  interaction   * * * * * * * * * * * * * * * */
-//What about touch interaction?
+function onTouchStart(event){
+  let [x,y] = getXY(event);
+  if (_model.points.count === 0) {//it adds the new point to the point list
+    _model.points.add(x, y, 0);
+  }
+  _model.points.add(x, y, 0);
+  draw();
+}
 
 // handles mouse down events
 // adds a new control point at the location of the mouse
 function onMouseDown(event) {
   // get the location of the mouse on the canvas
   let [x,y] = getXY(event);
-
   // if this is a brand new curve, add the first control point
   if (_model.points.count === 0) {//it adds the new point to the point list
     _model.points.add(x, y, 0);
   }
-
   // add a new control point that will be saved on the next mouse click
   // (the location of the previous control point is now frozen)
   _model.points.add(x, y, 0);
   draw();
+}
+
+function onMouseLeave(event){
+  //we need to remove the last point from the list and detach the listener
+  window.removeEventListener('mousemove', onMouseMove);//removing the listners for drawing
+  let index = _model.points.count -1;
+  if (index >= 0) {
+    _model.points.removeAt(index);
+    draw();
+  }
+}
+function onMouseEnter(event){
+  let index = _model.points.count -1;
+  if (index >= 0) {
+    let [x,y] = getXY(event);
+    _model.points.add(x, y, 0);
+    draw();
+  }
+  window.addEventListener('mousemove', onMouseMove);
 }
 
 // handles mouse move events
@@ -293,53 +332,72 @@ function onKeyUp(event) {
 
     //Added Backspace key behaviour for removing all the geometry
     case "Backspace":
-      if(_model.points.count > 1)
-        _model.points.clear();
-      if(_model.polylines.length >= 1)
-        _model.polylines.length = 0;
-      canvas.addEventListener('mousedown', onMouseDown);//allow a new polygon to be drawn
-      canvas.addEventListener('mousemove', onMouseMove);
+      deleteShape()
       break;
 
     //Added Left key to remove points
     case "ArrowLeft":
-      if(_model.points.count > 2)
-        _model.points.removeAt(_model.points.count - 2);
+      undo();
       break;
 
     // when the enter key is pressed, save the new polygon
     case "Enter":
-      if (_model.points.count < 4) { // 3 pts (min.) + next pt
-        alert('Not enough points!');
-      } else {
-        // remove the last point in the list (a.k.a. next)
-        let index = _model.points.count - 1;
-        _model.points.removeAt(index);
-        let poly = new _rhino3dm.Polyline(index + 1);
-        //perhaps checking if the polygon is self-intersecting
-        if(isCCW()){ //check if the polyline is CCW
-          for (var i = 0; i < index; i++) {
-            let [x,y,z] = _model.points.get(i);
-            poly.add(x,y,z);
-          }
-          let [x0, y0, z0] = _model.points.get(0);
-          poly.add(x0,y0,z0);//to close the polyline
-        }else{
-          for(var i = index -1; i >= 0; i--){
-            let [x,y,z] = _model.points.get(i);
-            poly.add(x,y,z);
-          }
-          let [x0, y0, z0] = _model.points.get(index -1);
-          poly.add(x0,y0,z0);
-        }
-        canvas.removeEventListener('mousedown', onMouseDown);//preveting the user from adding more polygons
-        canvas.removeEventListener('mousemove', onMouseMove);
-        _model.polylines.push(poly);
-      }
-      // clear points list
-      _model.points.clear();
+      closeShape(true);
       break;
   }
+  //draw();
+}
+
+function undo(){
+  if(_model.points.count > 2)
+    _model.points.removeAt(_model.points.count - 2);
+    draw()
+}
+
+function deleteShape(){
+  if(_model.points.count > 1)
+    _model.points.clear();
+  if(_model.polylines.length >= 1)
+    _model.polylines.length = 0;
+  canvas.addEventListener('mousedown', onMouseDown);//allow a new polygon to be drawn
+  canvas.addEventListener('mousemove', onMouseMove);
+  draw();
+}
+
+function closeShape(key){
+  if (_model.points.count < 4 && key || _model.points.count < 3 && !key) { // 3 pts (min.) + next pt
+    alert('Not enough points!');
+  } else {
+    let index = _model.points.count;
+    if(key){// remove the last point in the list (a.k.a. next) if not touch!
+      index = _model.points.count - 1;
+      _model.points.removeAt(index);
+    }
+    let poly = new _rhino3dm.Polyline(index + 1);
+    //perhaps checking if the polygon is self-intersecting
+    if(isCCW()){ //check if the polyline is CCW
+      for (var i = 0; i < index; i++) {
+        let [x,y,z] = _model.points.get(i);
+        poly.add(x,y,z);
+      }
+      let [x0, y0, z0] = _model.points.get(0);
+      poly.add(x0,y0,z0);//to close the polyline
+    }else{
+      for(var i = index -1; i >= 0; i--){
+        let [x,y,z] = _model.points.get(i);
+        poly.add(x,y,z);
+      }
+      let [x0, y0, z0] = _model.points.get(index -1);
+      poly.add(x0,y0,z0);
+    }
+    canvas.removeEventListener('mousedown', onMouseDown);//preveting the user from adding more polygons
+    canvas.removeEventListener('mousemove', onMouseMove);
+    canvas.removeEventListener('mouseenter', onMouseEnter);
+    canvas.removeEventListener('mouseleave', onMouseLeave);
+    _model.polylines.push(poly);
+  }
+  // clear points list
+  _model.points.clear();
   draw();
 }
 
@@ -347,7 +405,6 @@ function onKeyUp(event) {
 
 // gets the canvas
 function getCanvas() {
-  //In case the canvas dimensions are set in CSS...
   let canvas = document.getElementById('canvas');
   canvas.width = canvas.clientWidth;
   canvas.height = canvas.clientHeight;
