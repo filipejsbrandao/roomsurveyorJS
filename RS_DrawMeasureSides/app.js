@@ -369,6 +369,7 @@ function deleteShape(){
 }
 
 function closeShape(key){
+  //console(key);
   if (_model.points.count < 4 && key || _model.points.count < 3 && !key) { // 3 pts (min.) + next pt
     alert('Not enough points!');
   } else {
